@@ -25,7 +25,11 @@
   *{ box-sizing: border-box; }
   html,body{ margin:0; padding:0; }
   body{
-    background: var(--paper);
+    background-color: var(--paper);
+    background-image: url('note-image-tiled.jpg');
+    background-repeat: repeat;
+    background-size: 475px 840px;
+    background-position: top left;
     color: var(--ink);
     font-family: 'Noto Sans KR', sans-serif;
     min-height: 100vh;
@@ -59,20 +63,12 @@
   }
 
   /* ---------- Select (category) ---------- */
-  #view-select{ position:relative; text-align:center; flex:1; }
-  .select-top{
-    flex:1; display:flex; flex-direction:column;
-    align-items:center; justify-content:flex-end; padding-bottom: 22px;
-  }
-  .select-bottom{
-    flex:1; display:flex; flex-direction:column;
-    align-items:center; gap:14px; padding-top:0;
-  }
+  #view-select{ align-items:center; justify-content:center; text-align:center; flex:1; gap:14px; }
   .select-date{
     font-family:'Gaegu', cursive; font-weight:700; font-size:16px;
     color: var(--accent); margin-bottom: 6px;
   }
-  .select-eyebrow{ font-family:'Gaegu', cursive; font-weight:700; font-size:23px; color: var(--ink); line-height:1.5; }
+  .select-eyebrow{ font-family:'Gaegu', cursive; font-weight:700; font-size:23px; color: var(--ink); line-height:1.5; margin-bottom: 12px; }
   .btn-choice{
     width:100%; max-width:260px;
     appearance:none; cursor:pointer; border: 1.5px solid var(--accent);
@@ -107,21 +103,17 @@
   .btn-primary:active{ transform: translateY(2px); box-shadow:none; }
   .btn-primary:disabled{ background: var(--ink-faint); box-shadow:none; cursor:not-allowed; }
   .footer-link{
-    margin-top: auto; padding-top: 30px; text-align:center;
+    margin-top: 24px; text-align:center;
     font-size: 12px; color: var(--ink-faint); cursor:pointer; user-select:none;
   }
   .footer-link:hover{ color: var(--ink-soft); }
-  .footer-link + .footer-link{ padding-top: 10px; margin-top: 0; }
+  .footer-link + .footer-link{ margin-top: 10px; }
 
   .bottom-stack{
-    margin-top: auto; padding-top: 30px;
+    margin-top: 36px;
     display:flex; flex-direction:column; align-items:center; gap:10px;
   }
-  .bottom-stack .footer-link{ margin-top:0; padding-top:0; }
-  #view-select .footer-link{
-    position:absolute; left:50%; bottom:0; transform:translateX(-50%);
-    margin-top:0; padding-top:0;
-  }
+  .bottom-stack .footer-link{ margin-top:0; }
   .btn-home{
     width:46px; height:46px; border-radius:14px;
     background: var(--paper-deep); border:1px solid var(--paper-line);
@@ -281,14 +273,10 @@
   </div>
 
   <div id="view-select" class="view">
-    <div class="select-top">
-      <div class="select-date" id="select-date"></div>
-      <div class="select-eyebrow">오늘의 말씀, 어떻게 묵상할까요?</div>
-    </div>
-    <div class="select-bottom">
-      <button class="btn-choice" data-cat="bible">성경말씀필사</button>
-      <button class="btn-choice" data-cat="reflection">오늘의 묵상필사</button>
-    </div>
+    <div class="select-date" id="select-date"></div>
+    <div class="select-eyebrow">오늘의 말씀, 어떻게 묵상할까요?</div>
+    <button class="btn-choice" data-cat="bible">말씀쓰기</button>
+    <button class="btn-choice" data-cat="reflection">묵상쓰기</button>
     <div class="footer-link" id="link-admin-select">관리자</div>
   </div>
 
@@ -342,6 +330,12 @@
       <button class="btn-secondary" id="btn-share">공유하기</button>
     </div>
     <div class="final-restart" id="link-restart">처음부터 다시 필사하기</div>
+    <div class="bottom-stack">
+      <button class="btn-home" id="link-home-final" title="처음으로" aria-label="처음으로">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 11.5L12 4l9 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 10v9a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 20v-5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="footer-link" id="link-admin-final">관리자</div>
+    </div>
   </div>
 
   <div id="view-admin" class="view">
@@ -360,8 +354,8 @@
       </div>
 
       <div class="admin-cat-toggle">
-        <button class="cat-tab active" data-cat="bible">성경말씀필사</button>
-        <button class="cat-tab" data-cat="reflection">오늘의 묵상필사</button>
+        <button class="cat-tab active" data-cat="bible">말씀쓰기</button>
+        <button class="cat-tab" data-cat="reflection">묵상쓰기</button>
       </div>
 
       <div class="field">
@@ -388,7 +382,7 @@
       </div>
 
       <div class="admin-list">
-        <div class="admin-list-title" id="admin-list-title">등록된 성경말씀필사</div>
+        <div class="admin-list-title" id="admin-list-title">등록된 말씀쓰기</div>
         <div id="admin-list-items"></div>
       </div>
     </div>
@@ -409,8 +403,8 @@
   var ADMIN_PASSCODE = '1234'; // TODO: 배포 전 반드시 변경하세요
 
   var CATEGORIES = [
-    { id: 'bible', label: '성경말씀필사' },
-    { id: 'reflection', label: '오늘의 묵상필사' }
+    { id: 'bible', label: '말씀쓰기' },
+    { id: 'reflection', label: '묵상쓰기' }
   ];
 
   function categoryLabel(id){
@@ -884,10 +878,12 @@
 
     document.getElementById('link-back-select-landing').addEventListener('click', function(){ showView('select'); });
     document.getElementById('link-back-select-empty').addEventListener('click', function(){ showView('select'); });
+    document.getElementById('link-home-final').addEventListener('click', function(){ showView('select'); });
 
     document.getElementById('link-admin-select').addEventListener('click', openAdminGate);
     document.getElementById('link-admin-empty').addEventListener('click', openAdminGate);
     document.getElementById('link-admin-landing').addEventListener('click', openAdminGate);
+    document.getElementById('link-admin-final').addEventListener('click', openAdminGate);
     document.getElementById('link-admin-cancel').addEventListener('click', init);
     document.getElementById('link-admin-back').addEventListener('click', init);
     document.getElementById('gate-confirm').addEventListener('click', confirmGate);
