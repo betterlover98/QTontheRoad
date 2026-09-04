@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>오늘의 필사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EFE6D2;
+    --paper-deep: #E3D6B8;
+    --paper-line: #D8C9A6;
+    --ink: #2A2620;
+    --ink-soft: #6B6250;
+    --ink-faint: #B7A98A;
+    --accent: #2F4C6B;
+    --accent-deep: #22394F;
+    --vermillion: #A8392C;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --maxw: 460px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+  }
+  #app{
+    width: 100%;
+    max-width: var(--maxw);
+    min-height: 100vh;
+    background: var(--paper);
+    padding: 28px 22px 32px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .view{ display:none; flex-direction:column; flex:1; }
+  .view.active{ display:flex; }
+
+  /* ---------- Loading / Setup ---------- */
+  #view-loading{ align-items:center; justify-content:center; color: var(--ink-faint); font-size:14px; }
+  #view-setup{ align-items:center; justify-content:center; text-align:center; gap:12px; }
+  .setup-code{
+    font-family: monospace; font-size:12.5px; background: var(--paper-deep);
+    padding:8px 10px; border-radius:6px; color: var(--ink-soft); word-break: break-all;
+  }
+
+  /* ---------- Select (category) ---------- */
+  #view-select{ align-items:center; justify-content:center; text-align:center; flex:1; gap:14px; }
+  .select-eyebrow{ font-family:'Noto Serif KR', serif; font-size:19px; font-weight:600; margin-bottom: 10px; }
+  .btn-choice{
+    width:100%; max-width:260px;
+    appearance:none; cursor:pointer; border: 1.5px solid var(--accent);
+    background: transparent; color: var(--accent-deep);
+    font-family:'Noto Serif KR', serif; font-weight:600; font-size:16.5px;
+    padding: 16px 20px; border-radius: var(--radius-sm);
+  }
+  .btn-choice:active{ background: rgba(47,76,107,0.08); }
+  .top-link{ font-size:12px; color: var(--ink-faint); cursor:pointer; margin-bottom: 6px; }
+  .top-link:hover{ color: var(--ink-soft); }
+
+  /* ---------- Empty ---------- */
+  #view-empty{ align-items:center; justify-content:center; text-align:center; gap:14px; flex:1; }
+  .empty-mark{ width:48px; height:48px; opacity:.55; }
+  .empty-title{ font-family:'Noto Serif KR', serif; font-size:19px; font-weight:600; color:var(--ink); }
+  .empty-sub{ font-size:13.5px; color:var(--ink-soft); line-height:1.6; max-width:280px; }
+
+  /* ---------- Landing ---------- */
+  #view-landing{ align-items:center; justify-content:center; text-align:center; flex:1; gap:10px; }
+  .landing-date{ font-size:12.5px; color: var(--ink-faint); letter-spacing:.02em; margin-bottom:6px; }
+  .landing-eyebrow{ font-size:13px; color: var(--accent); font-weight:500; }
+  .landing-title{ font-family:'Noto Serif KR', serif; font-size:26px; font-weight:700; line-height:1.4; color:var(--ink); margin: 6px 0 4px; word-break: keep-all; }
+  .landing-count{ font-size:12.5px; color:var(--ink-soft); margin-bottom: 26px; }
+  .btn-primary{
+    appearance:none; border:none; cursor:pointer;
+    background: var(--accent); color:#F6EFDD;
+    font-family:'Noto Sans KR', sans-serif; font-weight:600; font-size:15px;
+    padding: 13px 34px; border-radius: var(--radius-sm);
+    box-shadow: 0 2px 0 var(--accent-deep);
+    transition: transform .08s ease;
+  }
+  .btn-primary:active{ transform: translateY(2px); box-shadow:none; }
+  .btn-primary:disabled{ background: var(--ink-faint); box-shadow:none; cursor:not-allowed; }
+  .footer-link{
+    margin-top: auto; padding-top: 30px; text-align:center;
+    font-size: 12px; color: var(--ink-faint); cursor:pointer; user-select:none;
+  }
+  .footer-link:hover{ color: var(--ink-soft); }
+  .footer-link + .footer-link{ padding-top: 10px; margin-top: 0; }
+
+  /* ---------- Typing ---------- */
+  #view-typing{ gap: 20px; }
+  .progress-track{ height:3px; background: var(--paper-line); border-radius:2px; overflow:hidden; }
+  .progress-fill{ height:100%; background: var(--accent); width:0%; transition: width .25s ease; }
+  .page-indicator{ font-size:12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .target-wrap{ flex:1; display:flex; align-items:center; min-height: 140px; position:relative; }
+  .target-display{
+    font-family:'Noto Serif KR', serif; font-size:22px; line-height:1.85;
+    word-break: keep-all; overflow-wrap: break-word; letter-spacing: .01em;
+  }
+  .ch{ transition: color .1s ease; }
+  .ch.pending{ color: var(--ink-faint); }
+  .ch.correct{ color: var(--accent-deep); }
+  .ch.wrong{ color: var(--vermillion); background: rgba(168,57,44,0.10); border-radius:2px; }
+  .ch.space.pending{ border-bottom: 1.5px dashed var(--ink-faint); padding: 0 2px; }
+  .ch.space.correct{ border-bottom: 1.5px solid var(--accent-deep); padding:0 2px; }
+  .ch.space.wrong{ border-bottom: 1.5px solid var(--vermillion); padding:0 2px; }
+
+  .stamp{
+    position:absolute; right:4px; top:-6px;
+    width:46px; height:46px; border-radius:50%;
+    border: 2px solid var(--vermillion); color: var(--vermillion);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Noto Serif KR', serif; font-weight:700; font-size:14px;
+    transform: scale(0) rotate(-12deg); opacity:0;
+    pointer-events:none;
+  }
+  .stamp.show{ animation: stampIn .5s cubic-bezier(.34,1.56,.64,1) forwards; }
+  @keyframes stampIn{
+    0%{ transform: scale(1.7) rotate(-12deg); opacity:0; }
+    55%{ transform: scale(.95) rotate(-12deg); opacity:1; }
+    100%{ transform: scale(1) rotate(-12deg); opacity:1; }
+  }
+
+  textarea#typing-input{
+    width:100%; resize:none; border: 1px solid var(--paper-line);
+    background: #F8F2E3; color: var(--ink);
+    font-family:'Noto Sans KR', sans-serif; font-size:16px; line-height:1.6;
+    border-radius: var(--radius-sm); padding: 13px 14px;
+    min-height: 78px;
+  }
+  textarea#typing-input:focus{ outline:none; border-color: var(--accent); background:#FBF7EC; }
+
+  .typing-actions{ display:flex; justify-content:flex-end; }
+
+  /* ---------- Final ---------- */
+  #view-final{ gap:18px; align-items:stretch; }
+  .final-heading{ font-family:'Noto Serif KR', serif; font-size:20px; font-weight:600; text-align:center; margin-top:6px; }
+  .final-card{
+    background: var(--paper-deep);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-md);
+    padding: 22px 20px;
+    font-family:'Noto Serif KR', serif; font-size:16.5px; line-height:2;
+    white-space: pre-wrap; word-break: keep-all;
+    animation: fadeUp .5s ease;
+  }
+  @keyframes fadeUp{ from{ opacity:0; transform: translateY(8px); } to{ opacity:1; transform:none; } }
+  .final-actions{ display:flex; gap:10px; }
+  .btn-secondary{
+    flex:1; appearance:none; cursor:pointer; border: 1px solid var(--accent);
+    background: transparent; color: var(--accent-deep);
+    font-family:'Noto Sans KR', sans-serif; font-weight:600; font-size:14px;
+    padding: 12px 10px; border-radius: var(--radius-sm);
+  }
+  .btn-secondary:active{ background: rgba(47,76,107,0.08); }
+  .final-restart{ text-align:center; font-size:12.5px; color: var(--ink-faint); cursor:pointer; margin-top:4px; }
+  .final-restart:hover{ color: var(--ink-soft); }
+
+  /* ---------- Admin ---------- */
+  #view-admin{ gap:16px; }
+  .admin-header{ display:flex; align-items:center; justify-content:space-between; }
+  .admin-title{ font-family:'Noto Serif KR', serif; font-size:18px; font-weight:600; }
+  .link-back{ font-size:12.5px; color: var(--ink-soft); cursor:pointer; }
+  .admin-cat-toggle{ display:flex; gap:8px; }
+  .cat-tab{
+    flex:1; appearance:none; cursor:pointer; border:1px solid var(--paper-line);
+    background:#F8F2E3; color: var(--ink-soft); font-family:'Noto Sans KR',sans-serif;
+    font-size:13px; font-weight:600; padding:9px 6px; border-radius: var(--radius-sm);
+  }
+  .cat-tab.active{ background: var(--accent); color:#F6EFDD; border-color:var(--accent); }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-size:12.5px; color: var(--ink-soft); font-weight:500; }
+  .field input[type=text], .field input[type=date]{
+    border:1px solid var(--paper-line); background:#F8F2E3; color:var(--ink);
+    font-family:'Noto Sans KR', sans-serif; font-size:14.5px;
+    padding:10px 11px; border-radius: var(--radius-sm);
+  }
+  .field textarea{
+    border:1px solid var(--paper-line); background:#F8F2E3; color:var(--ink);
+    font-family:'Noto Sans KR', sans-serif; font-size:14.5px; line-height:1.6;
+    padding:10px 11px; border-radius: var(--radius-sm); min-height:130px; resize:vertical;
+  }
+  .field-hint{ font-size:11.5px; color: var(--ink-faint); }
+  .admin-save-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .admin-preview{ font-size:12px; color: var(--ink-soft); }
+  .admin-list{ display:flex; flex-direction:column; gap:8px; margin-top:4px; }
+  .admin-list-title{ font-size:12.5px; color: var(--ink-soft); font-weight:600; }
+  .admin-item{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    border:1px solid var(--paper-line); border-radius: var(--radius-sm);
+    padding: 9px 11px; background:#F8F2E3;
+  }
+  .admin-item-info{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .admin-item-date{ font-size:11.5px; color: var(--ink-faint); }
+  .admin-item-title{ font-size:13.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px; }
+  .admin-item-actions{ display:flex; gap:6px; flex-shrink:0; }
+  .admin-item-actions button{
+    appearance:none; border:1px solid var(--paper-line); background:transparent;
+    color: var(--ink-soft); font-size:11.5px; padding:5px 9px; border-radius:5px; cursor:pointer;
+  }
+  .admin-item-actions button.danger{ color: var(--vermillion); border-color: rgba(168,57,44,.35); }
+
+  .gate{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; }
+  .gate-title{ font-family:'Noto Serif KR', serif; font-size:17px; }
+  .gate input{
+    border:1px solid var(--paper-line); background:#F8F2E3; color:var(--ink);
+    font-size:16px; padding:10px 14px; border-radius: var(--radius-sm); text-align:center; letter-spacing:.2em;
+    width: 160px;
+  }
+  .gate-error{ font-size:12px; color: var(--vermillion); min-height:16px; }
+
+  /* ---------- Toast ---------- */
+  #toast{
+    position:fixed; left:50%; bottom:30px; transform:translateX(-50%) translateY(20px);
+    background: var(--ink); color: #F3EAD4; font-size:13px; font-family:'Noto Sans KR',sans-serif;
+    padding:10px 18px; border-radius: 20px; opacity:0; pointer-events:none; transition: all .25s ease;
+    z-index: 50; white-space:nowrap;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="view-loading" class="view active">준비하고 있어요…</div>
+
+  <div id="view-setup" class="view">
+    <div class="empty-title">설정이 필요해요</div>
+    <div class="empty-sub">코드 상단의 <code>FIREBASE_DB_URL</code> 값을 실제 Firebase Realtime Database 주소로 바꿔주세요.</div>
+    <div class="setup-code">FIREBASE_DB_URL = 'https://내프로젝트-default-rtdb.리전.firebasedatabase.app'</div>
+  </div>
+
+  <div id="view-select" class="view">
+    <div class="select-eyebrow">무엇을 필사할까요?</div>
+    <button class="btn-choice" data-cat="bible">성경말씀필사</button>
+    <button class="btn-choice" data-cat="reflection">오늘의 묵상필사</button>
+    <div class="footer-link" id="link-admin-select">관리자</div>
+  </div>
+
+  <div id="view-empty" class="view">
+    <svg class="empty-mark" viewBox="0 0 48 48" fill="none">
+      <path d="M8 12h20a6 6 0 0 1 6 6v20H14a6 6 0 0 1-6-6V12Z" stroke="#6B6250" stroke-width="1.6"/>
+      <path d="M14 20h14M14 27h10" stroke="#6B6250" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <div class="empty-title" id="empty-title">오늘의 글이 아직 없어요</div>
+    <div class="empty-sub" id="empty-sub">평일 오전 7시에 새로운 글이 준비됩니다.<br/>잠시 후 다시 확인해 주세요.</div>
+    <div class="footer-link" id="link-back-select-empty">다른 항목 선택하기</div>
+    <div class="footer-link" id="link-admin-empty">관리자</div>
+  </div>
+
+  <div id="view-landing" class="view">
+    <div class="top-link" id="link-back-select-landing">다른 필사 선택</div>
+    <div class="landing-date" id="landing-date"></div>
+    <div class="landing-eyebrow" id="landing-eyebrow">오늘의 묵상</div>
+    <div class="landing-title" id="landing-title"></div>
+    <div class="landing-count" id="landing-count"></div>
+    <button class="btn-primary" id="btn-start">시작하기</button>
+    <div class="footer-link" id="link-admin-landing" style="margin-top:60px;">관리자</div>
+  </div>
+
+  <div id="view-typing" class="view">
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="page-indicator" id="page-indicator"></div>
+    <div class="target-wrap">
+      <div class="target-display" id="target-display"></div>
+      <div class="stamp" id="stamp">필사</div>
+    </div>
+    <textarea id="typing-input" rows="2" placeholder="여기에 따라 입력해 보세요" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+    <div class="typing-actions">
+      <button class="btn-primary" id="btn-next" disabled>다음</button>
+    </div>
+  </div>
+
+  <div id="view-final" class="view">
+    <div class="final-heading">오늘의 필사를 마쳤어요</div>
+    <div class="final-card" id="final-text"></div>
+    <div class="final-actions">
+      <button class="btn-secondary" id="btn-copy">복사하기</button>
+      <button class="btn-secondary" id="btn-share">공유하기</button>
+    </div>
+    <div class="final-restart" id="link-restart">처음부터 다시 필사하기</div>
+  </div>
+
+  <div id="view-admin" class="view">
+    <div class="gate" id="admin-gate">
+      <div class="gate-title">관리자 접근</div>
+      <input type="password" id="gate-input" placeholder="비밀번호" inputmode="numeric" />
+      <div class="gate-error" id="gate-error"></div>
+      <button class="btn-primary" id="gate-confirm">확인</button>
+      <div class="footer-link" id="link-admin-cancel">사용자 화면으로</div>
+    </div>
+
+    <div id="admin-panel" style="display:none; flex-direction:column; gap:16px;">
+      <div class="admin-header">
+        <div class="admin-title">묵상 관리</div>
+        <div class="link-back" id="link-admin-back">사용자 화면으로</div>
+      </div>
+
+      <div class="admin-cat-toggle">
+        <button class="cat-tab active" data-cat="bible">성경말씀필사</button>
+        <button class="cat-tab" data-cat="reflection">오늘의 묵상필사</button>
+      </div>
+
+      <div class="field">
+        <label for="f-date">날짜</label>
+        <input type="date" id="f-date" />
+        <div class="field-hint">선택한 날짜 오전 7시부터 다음날 오전 7시까지 노출됩니다.</div>
+      </div>
+
+      <div class="field">
+        <label for="f-title" id="f-title-label">제목</label>
+        <input type="text" id="f-title" placeholder="" />
+        <div class="field-hint" id="f-title-hint"></div>
+      </div>
+
+      <div class="field">
+        <label for="f-sentences">본문 (한 줄에 한 문장)</label>
+        <textarea id="f-sentences" placeholder="한 줄에 한 문장씩 입력하세요.&#10;각 줄이 하나의 타이핑 페이지가 됩니다."></textarea>
+        <div class="admin-preview" id="f-preview">0문장 · 0페이지</div>
+      </div>
+
+      <div class="admin-save-row">
+        <div class="field-hint" id="f-status"></div>
+        <button class="btn-primary" id="f-save">저장하기</button>
+      </div>
+
+      <div class="admin-list">
+        <div class="admin-list-title" id="admin-list-title">등록된 성경말씀필사</div>
+        <div id="admin-list-items"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ===== Config =====
+  // TODO: 아래 값을 실제 Firebase Realtime Database URL로 바꿔주세요.
+  // Firebase 콘솔 > 프로젝트 생성 > Build > Realtime Database > 데이터베이스 만들기
+  // 상단에 표시되는 주소를 그대로 복사해서 붙여넣으면 됩니다.
+  var FIREBASE_DB_URL = 'https://today-sctmp-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var ADMIN_PASSCODE = '1234'; // TODO: 배포 전 반드시 변경하세요
+
+  var CATEGORIES = [
+    { id: 'bible', label: '성경말씀필사' },
+    { id: 'reflection', label: '오늘의 묵상필사' }
+  ];
+
+  function categoryLabel(id){
+    var found = CATEGORIES.filter(function(c){ return c.id === id; })[0];
+    return found ? found.label : id;
+  }
+
+  var CATEGORY_FIELD = {
+    bible: {
+      label: '성경 주소',
+      placeholder: '레위기 13장 15절',
+      hint: '책 이름은 줄임말 없이 정식 명칭으로 입력해주세요. 예: 레위기 13장 15절'
+    },
+    reflection: {
+      label: '출처',
+      placeholder: '조정민 목사의 365 묵상',
+      hint: '예: 조정민 목사의 365 묵상'
+    }
+  };
+
+  function applyCategoryFieldLabels(){
+    var cfg = CATEGORY_FIELD[adminCategory] || CATEGORY_FIELD.bible;
+    document.getElementById('f-title-label').textContent = cfg.label;
+    document.getElementById('f-title').placeholder = cfg.placeholder;
+    document.getElementById('f-title-hint').textContent = cfg.hint;
+  }
+
+  function isFirebaseConfigured(){
+    return FIREBASE_DB_URL.indexOf('YOUR-PROJECT-ID') === -1;
+  }
+
+  // ===== DOM refs =====
+  var views = {
+    loading: document.getElementById('view-loading'),
+    setup: document.getElementById('view-setup'),
+    select: document.getElementById('view-select'),
+    empty: document.getElementById('view-empty'),
+    landing: document.getElementById('view-landing'),
+    typing: document.getElementById('view-typing'),
+    final: document.getElementById('view-final'),
+    admin: document.getElementById('view-admin')
+  };
+
+  function showView(name){
+    Object.keys(views).forEach(function(k){
+      views[k].classList.toggle('active', k === name);
+    });
+  }
+
+  function toast(msg){
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ el.classList.remove('show'); }, 1800);
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  // ===== Date / service-day logic (KST, 07:00 cutoff) =====
+  function getKSTParts(date){
+    date = date || new Date();
+    var fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', hour12:false
+    });
+    var parts = {};
+    fmt.formatToParts(date).forEach(function(p){ parts[p.type] = p.value; });
+    var hour = parseInt(parts.hour, 10);
+    if (hour === 24) hour = 0;
+    return { year: parseInt(parts.year,10), month: parseInt(parts.month,10), day: parseInt(parts.day,10), hour: hour };
+  }
+
+  function shiftYMD(y, m, d, deltaDays){
+    var dt = new Date(Date.UTC(y, m - 1, d));
+    dt.setUTCDate(dt.getUTCDate() + deltaDays);
+    return { y: dt.getUTCFullYear(), m: dt.getUTCMonth() + 1, d: dt.getUTCDate() };
+  }
+
+  function ymdKey(y, m, d){
+    return y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+  }
+
+  function getServiceDateKey(){
+    var p = getKSTParts();
+    var y = p.year, m = p.month, d = p.day;
+    if (p.hour < 7){
+      var shifted = shiftYMD(y, m, d, -1);
+      y = shifted.y; m = shifted.m; d = shifted.d;
+    }
+    return ymdKey(y, m, d);
+  }
+
+  function formatKoreanDate(key){
+    var parts = key.split('-').map(Number);
+    var dt = new Date(Date.UTC(parts[0], parts[1]-1, parts[2], 12));
+    var weekday = new Intl.DateTimeFormat('ko-KR', { timeZone:'UTC', weekday:'short' }).format(dt);
+    return (parts[1]) + '월 ' + parts[2] + '일 (' + weekday + ')';
+  }
+
+  function monthDayLabel(key){
+    var parts = key.split('-').map(Number);
+    return parts[1] + '월 ' + parts[2] + '일';
+  }
+
+  // ===== Firebase Realtime Database helpers (plain REST, no SDK) =====
+  function dbUrl(path){
+    return FIREBASE_DB_URL.replace(/\/$/, '') + '/' + path + '.json';
+  }
+  function dbGet(path){
+    return fetch(dbUrl(path)).then(function(r){
+      if (!r.ok) throw new Error('get failed');
+      return r.json();
+    });
+  }
+  function dbSet(path, value){
+    return fetch(dbUrl(path), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(value)
+    }).then(function(r){
+      if (!r.ok) throw new Error('set failed');
+      return r.json();
+    });
+  }
+  function dbDelete(path){
+    return fetch(dbUrl(path), { method: 'DELETE' }).then(function(r){
+      if (!r.ok) throw new Error('delete failed');
+      return true;
+    });
+  }
+
+  // ===== App state =====
+  var App = {
+    category: null,
+    content: null,
+    contentKey: null,
+    sentenceIndex: 0
+  };
+  var adminCategory = 'bible';
+
+  // ===== Init =====
+  function init(){
+    if (!isFirebaseConfigured()){
+      showView('setup');
+      return;
+    }
+    showView('select');
+  }
+
+  function chooseCategory(catId){
+    App.category = catId;
+    showView('loading');
+    var key = getServiceDateKey();
+    App.contentKey = key;
+    dbGet('devotional/' + catId + '/' + key).then(function(data){
+      if (data && data.sentences && data.sentences.length){
+        App.content = data;
+        renderLanding();
+        showView('landing');
+      } else {
+        renderEmpty(catId, false);
+        showView('empty');
+      }
+    }).catch(function(){
+      renderEmpty(catId, true);
+      showView('empty');
+    });
+  }
+
+  function renderEmpty(catId, isError){
+    document.getElementById('empty-title').textContent = categoryLabel(catId) + ' — 오늘의 글이 아직 없어요';
+    document.getElementById('empty-sub').innerHTML = isError
+      ? '데이터를 불러오지 못했어요.<br/>잠시 후 다시 시도해 주세요.'
+      : '평일 오전 7시에 새로운 글이 준비됩니다.<br/>잠시 후 다시 확인해 주세요.';
+  }
+
+  function renderLanding(){
+    document.getElementById('landing-date').textContent = formatKoreanDate(App.contentKey);
+    document.getElementById('landing-eyebrow').textContent = categoryLabel(App.category);
+    document.getElementById('landing-title').textContent = App.content.title || '오늘의 글';
+    document.getElementById('landing-count').textContent = App.content.sentences.length + '문장';
+  }
+
+  // ===== Typing session =====
+  function startSession(){
+    App.sentenceIndex = 0;
+    renderTypingPage();
+    showView('typing');
+  }
+
+  function currentSentence(){
+    return App.content.sentences[App.sentenceIndex];
+  }
+
+  function renderTypingPage(){
+    var total = App.content.sentences.length;
+    document.getElementById('page-indicator').textContent = (App.sentenceIndex + 1) + ' / ' + total;
+    document.getElementById('progress-fill').style.width = (App.sentenceIndex / total * 100) + '%';
+    var input = document.getElementById('typing-input');
+    input.value = '';
+    document.getElementById('btn-next').disabled = true;
+    document.getElementById('stamp').classList.remove('show');
+    renderTargetDisplay('');
+    input.focus();
+  }
+
+  function renderTargetDisplay(typedValue){
+    var target = Array.from(currentSentence());
+    var typed = Array.from(typedValue);
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < target.length; i++){
+      var ch = target[i];
+      var span = document.createElement('span');
+      var isSpace = ch === ' ' || ch === '\u3000';
+      var cls = 'ch' + (isSpace ? ' space' : '');
+      if (i < typed.length){
+        cls += (typed[i] === ch) ? ' correct' : ' wrong';
+      } else {
+        cls += ' pending';
+      }
+      span.className = cls;
+      span.textContent = ch;
+      frag.appendChild(span);
+    }
+    var display = document.getElementById('target-display');
+    display.innerHTML = '';
+    display.appendChild(frag);
+  }
+
+  function handleTypingInput(){
+    var input = document.getElementById('typing-input');
+    var val = input.value;
+    renderTargetDisplay(val);
+    var targetLen = Array.from(currentSentence()).length;
+    var typedLen = Array.from(val).length;
+    var nextBtn = document.getElementById('btn-next');
+    nextBtn.disabled = typedLen < targetLen;
+
+    if (val === currentSentence()){
+      var stamp = document.getElementById('stamp');
+      stamp.classList.remove('show');
+      void stamp.offsetWidth;
+      stamp.classList.add('show');
+      clearTimeout(handleTypingInput._t);
+      handleTypingInput._t = setTimeout(advancePage, 550);
+    }
+  }
+
+  function advancePage(){
+    if (App.sentenceIndex >= App.content.sentences.length - 1){
+      finishSession();
+    } else {
+      App.sentenceIndex += 1;
+      renderTypingPage();
+    }
+  }
+
+  function finishSession(){
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('final-text').textContent = buildFinalText();
+    showView('final');
+  }
+
+  // ===== Final actions =====
+  function buildFinalText(){
+    var body = App.content.sentences.join('\n\n');
+    var ref = (App.content.title || '').trim();
+    if (App.category === 'bible'){
+      return ref ? (body + '\n\n[' + ref + ']') : body;
+    }
+    if (App.category === 'reflection'){
+      var dateLine = '\uD83D\uDCD6 ' + monthDayLabel(App.contentKey) + ' 오늘의 묵상';
+      var withDate = dateLine + '\n\n' + body;
+      return ref ? (withDate + '\n\n[' + ref + ']') : withDate;
+    }
+    return body;
+  }
+
+  function getFullText(){
+    return buildFinalText();
+  }
+
+  function copyText(){
+    var text = getFullText();
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        toast('복사되었습니다');
+      }).catch(function(){ fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text){
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast('복사되었습니다');
+    }catch(e){
+      toast('복사에 실패했어요');
+    }
+  }
+
+  function shareText(){
+    var text = getFullText();
+    if (navigator.share){
+      navigator.share({ title: App.content.title || '오늘의 글', text: text }).catch(function(){});
+    } else {
+      copyText();
+      toast('공유 기능이 없어 복사했어요');
+    }
+  }
+
+  // ===== Admin =====
+  function openAdminGate(){
+    document.getElementById('gate-input').value = '';
+    document.getElementById('gate-error').textContent = '';
+    document.getElementById('admin-gate').style.display = 'flex';
+    document.getElementById('admin-panel').style.display = 'none';
+    showView('admin');
+  }
+
+  function confirmGate(){
+    var val = document.getElementById('gate-input').value;
+    if (val === ADMIN_PASSCODE){
+      openAdminPanel();
+    } else {
+      document.getElementById('gate-error').textContent = '비밀번호가 올바르지 않습니다.';
+    }
+  }
+
+  function openAdminPanel(){
+    document.getElementById('admin-gate').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'flex';
+    adminCategory = 'bible';
+    document.querySelectorAll('.cat-tab').forEach(function(b){
+      b.classList.toggle('active', b.dataset.cat === adminCategory);
+    });
+    applyCategoryFieldLabels();
+    resetAdminForm();
+    document.getElementById('admin-list-title').textContent = '등록된 ' + categoryLabel(adminCategory);
+    refreshAdminList();
+  }
+
+  function resetAdminForm(){
+    var p = getKSTParts();
+    document.getElementById('f-date').value = ymdKey(p.year, p.month, p.day);
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-sentences').value = '';
+    updatePreview();
+    document.getElementById('f-status').textContent = '';
+  }
+
+  function updatePreview(){
+    var lines = document.getElementById('f-sentences').value.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+    document.getElementById('f-preview').textContent = lines.length + '문장 · ' + lines.length + '페이지';
+  }
+
+  function saveAdminEntry(){
+    var dateVal = document.getElementById('f-date').value;
+    var title = document.getElementById('f-title').value.trim();
+    var lines = document.getElementById('f-sentences').value.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+
+    var fieldLabel = (CATEGORY_FIELD[adminCategory] || CATEGORY_FIELD.bible).label;
+    if (!dateVal){ document.getElementById('f-status').textContent = '날짜를 선택해 주세요.'; return; }
+    if (!title){ document.getElementById('f-status').textContent = fieldLabel + '을(를) 입력해 주세요.'; return; }
+    if (!lines.length){ document.getElementById('f-status').textContent = '문장을 한 줄 이상 입력해 주세요.'; return; }
+
+    var payload = { title: title, sentences: lines, updatedAt: Date.now() };
+    document.getElementById('f-status').textContent = '저장 중…';
+    dbSet('devotional/' + adminCategory + '/' + dateVal, payload).then(function(){
+      document.getElementById('f-status').textContent = '';
+      toast('저장되었습니다');
+      refreshAdminList();
+    }).catch(function(){
+      document.getElementById('f-status').textContent = '저장에 실패했어요. 다시 시도해 주세요.';
+    });
+  }
+
+  function refreshAdminList(){
+    var listEl = document.getElementById('admin-list-items');
+    listEl.innerHTML = '<div class="field-hint">불러오는 중…</div>';
+    dbGet('devotional/' + adminCategory).then(function(obj){
+      var keys = Object.keys(obj || {}).sort().reverse().slice(0, 20);
+      if (!keys.length){
+        listEl.innerHTML = '<div class="field-hint">등록된 글이 없습니다.</div>';
+        return;
+      }
+      listEl.innerHTML = '';
+      keys.forEach(function(dateStr){
+        var data = obj[dateStr];
+        var item = document.createElement('div');
+        item.className = 'admin-item';
+        var info = document.createElement('div');
+        info.className = 'admin-item-info';
+        var dEl = document.createElement('div');
+        dEl.className = 'admin-item-date';
+        dEl.textContent = dateStr;
+        var tEl = document.createElement('div');
+        tEl.className = 'admin-item-title';
+        tEl.textContent = data.title || '(제목 없음)';
+        info.appendChild(dEl); info.appendChild(tEl);
+
+        var actions = document.createElement('div');
+        actions.className = 'admin-item-actions';
+        var editBtn = document.createElement('button');
+        editBtn.textContent = '수정';
+        editBtn.addEventListener('click', function(){
+          document.getElementById('f-date').value = dateStr;
+          document.getElementById('f-title').value = data.title || '';
+          document.getElementById('f-sentences').value = (data.sentences || []).join('\n');
+          updatePreview();
+          window.scrollTo(0,0);
+        });
+        var delBtn = document.createElement('button');
+        delBtn.className = 'danger';
+        delBtn.textContent = '삭제';
+        delBtn.addEventListener('click', function(){
+          if (!confirm(dateStr + ' 글을 삭제할까요?')) return;
+          dbDelete('devotional/' + adminCategory + '/' + dateStr).then(function(){
+            toast('삭제되었습니다');
+            refreshAdminList();
+          });
+        });
+        actions.appendChild(editBtn); actions.appendChild(delBtn);
+        item.appendChild(info); item.appendChild(actions);
+        listEl.appendChild(item);
+      });
+    }).catch(function(){
+      listEl.innerHTML = '<div class="field-hint">목록을 불러오지 못했어요.</div>';
+    });
+  }
+
+  // ===== Event wiring =====
+  document.addEventListener('DOMContentLoaded', function(){
+    init();
+
+    document.querySelectorAll('.btn-choice').forEach(function(btn){
+      btn.addEventListener('click', function(){ chooseCategory(btn.dataset.cat); });
+    });
+
+    document.getElementById('btn-start').addEventListener('click', startSession);
+    document.getElementById('typing-input').addEventListener('input', handleTypingInput);
+    document.getElementById('typing-input').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') e.preventDefault();
+    });
+    document.getElementById('btn-next').addEventListener('click', function(){
+      clearTimeout(handleTypingInput._t);
+      advancePage();
+    });
+
+    document.getElementById('btn-copy').addEventListener('click', copyText);
+    document.getElementById('btn-share').addEventListener('click', shareText);
+    document.getElementById('link-restart').addEventListener('click', function(){
+      chooseCategory(App.category);
+    });
+
+    document.getElementById('link-back-select-landing').addEventListener('click', function(){ showView('select'); });
+    document.getElementById('link-back-select-empty').addEventListener('click', function(){ showView('select'); });
+
+    document.getElementById('link-admin-select').addEventListener('click', openAdminGate);
+    document.getElementById('link-admin-empty').addEventListener('click', openAdminGate);
+    document.getElementById('link-admin-landing').addEventListener('click', openAdminGate);
+    document.getElementById('link-admin-cancel').addEventListener('click', init);
+    document.getElementById('link-admin-back').addEventListener('click', init);
+    document.getElementById('gate-confirm').addEventListener('click', confirmGate);
+    document.getElementById('gate-input').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') confirmGate();
+    });
+
+    document.querySelectorAll('.cat-tab').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        document.querySelectorAll('.cat-tab').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        adminCategory = btn.dataset.cat;
+        applyCategoryFieldLabels();
+        document.getElementById('admin-list-title').textContent = '등록된 ' + categoryLabel(adminCategory);
+        resetAdminForm();
+        refreshAdminList();
+      });
+    });
+
+    document.getElementById('f-sentences').addEventListener('input', updatePreview);
+    document.getElementById('f-save').addEventListener('click', saveAdminEntry);
+  });
+})();
+</script>
+</body>
+</html>
