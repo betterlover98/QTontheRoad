@@ -6,7 +6,7 @@
 <title>오늘의 필사</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --paper: #EFE6D2;
@@ -37,7 +37,13 @@
     width: 100%;
     max-width: var(--maxw);
     min-height: 100vh;
-    background: var(--paper);
+    background-color: var(--paper);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 27px,
+      var(--paper-line) 28px
+    );
     padding: 28px 22px 32px;
     display: flex;
     flex-direction: column;
@@ -55,8 +61,20 @@
   }
 
   /* ---------- Select (category) ---------- */
-  #view-select{ align-items:center; justify-content:center; text-align:center; flex:1; gap:14px; }
-  .select-eyebrow{ font-family:'Noto Serif KR', serif; font-size:19px; font-weight:600; margin-bottom: 10px; }
+  #view-select{ position:relative; text-align:center; flex:1; }
+  .select-top{
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:flex-end; padding-bottom: 22px;
+  }
+  .select-bottom{
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; gap:14px; padding-top:0;
+  }
+  .select-date{
+    font-family:'Gaegu', cursive; font-weight:700; font-size:16px;
+    color: var(--accent); margin-bottom: 6px;
+  }
+  .select-eyebrow{ font-family:'Gaegu', cursive; font-weight:700; font-size:23px; color: var(--ink); line-height:1.5; }
   .btn-choice{
     width:100%; max-width:260px;
     appearance:none; cursor:pointer; border: 1.5px solid var(--accent);
@@ -102,6 +120,10 @@
     display:flex; flex-direction:column; align-items:center; gap:10px;
   }
   .bottom-stack .footer-link{ margin-top:0; padding-top:0; }
+  #view-select .footer-link{
+    position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+    margin-top:0; padding-top:0;
+  }
   .btn-home{
     width:46px; height:46px; border-radius:14px;
     background: var(--paper-deep); border:1px solid var(--paper-line);
@@ -261,9 +283,14 @@
   </div>
 
   <div id="view-select" class="view">
-    <div class="select-eyebrow">무엇을 필사할까요?</div>
-    <button class="btn-choice" data-cat="bible">성경말씀필사</button>
-    <button class="btn-choice" data-cat="reflection">오늘의 묵상필사</button>
+    <div class="select-top">
+      <div class="select-date" id="select-date"></div>
+      <div class="select-eyebrow">오늘의 말씀, 어떻게 묵상할까요?</div>
+    </div>
+    <div class="select-bottom">
+      <button class="btn-choice" data-cat="bible">성경말씀필사</button>
+      <button class="btn-choice" data-cat="reflection">오늘의 묵상필사</button>
+    </div>
     <div class="footer-link" id="link-admin-select">관리자</div>
   </div>
 
@@ -537,6 +564,7 @@
       showView('setup');
       return;
     }
+    document.getElementById('select-date').textContent = formatKoreanDate(getServiceDateKey());
     showView('select');
   }
 
