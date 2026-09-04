@@ -97,6 +97,22 @@
   .footer-link:hover{ color: var(--ink-soft); }
   .footer-link + .footer-link{ padding-top: 10px; margin-top: 0; }
 
+  .bottom-stack{
+    margin-top: auto; padding-top: 30px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .bottom-stack .footer-link{ margin-top:0; padding-top:0; }
+  .btn-home{
+    width:46px; height:46px; border-radius:14px;
+    background: var(--paper-deep); border:1px solid var(--paper-line);
+    color: var(--ink-soft); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 3px 4px rgba(42,38,32,.18);
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .btn-home:active{ transform: translateY(2px); box-shadow: inset 0 1px 2px rgba(42,38,32,.22); }
+  .btn-home svg{ width:20px; height:20px; display:block; }
+
   /* ---------- Typing ---------- */
   #view-typing{ gap: 20px; }
   .progress-track{ height:3px; background: var(--paper-line); border-radius:2px; overflow:hidden; }
@@ -258,18 +274,26 @@
     </svg>
     <div class="empty-title" id="empty-title">오늘의 글이 아직 없어요</div>
     <div class="empty-sub" id="empty-sub">평일 오전 7시에 새로운 글이 준비됩니다.<br/>잠시 후 다시 확인해 주세요.</div>
-    <div class="footer-link" id="link-back-select-empty">다른 항목 선택하기</div>
-    <div class="footer-link" id="link-admin-empty">관리자</div>
+    <div class="bottom-stack">
+      <button class="btn-home" id="link-back-select-empty" title="처음으로" aria-label="처음으로">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 11.5L12 4l9 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 10v9a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 20v-5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="footer-link" id="link-admin-empty">관리자</div>
+    </div>
   </div>
 
   <div id="view-landing" class="view">
-    <div class="top-link" id="link-back-select-landing">다른 필사 선택</div>
     <div class="landing-date" id="landing-date"></div>
     <div class="landing-eyebrow" id="landing-eyebrow">오늘의 묵상</div>
     <div class="landing-title" id="landing-title"></div>
     <div class="landing-count" id="landing-count"></div>
     <button class="btn-primary" id="btn-start">시작하기</button>
-    <div class="footer-link" id="link-admin-landing" style="margin-top:60px;">관리자</div>
+    <div class="bottom-stack">
+      <button class="btn-home" id="link-back-select-landing" title="처음으로" aria-label="처음으로">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 11.5L12 4l9 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 10v9a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 20v-5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="footer-link" id="link-admin-landing">관리자</div>
+    </div>
   </div>
 
   <div id="view-typing" class="view">
@@ -635,7 +659,9 @@
     var body = App.content.sentences.join('\n\n');
     var ref = (App.content.title || '').trim();
     if (App.category === 'bible'){
-      return ref ? (body + '\n\n[' + ref + ']') : body;
+      var bibleDateLine = '\uD83D\uDCDC ' + monthDayLabel(App.contentKey) + ' 오늘의 말씀';
+      var bibleWithDate = bibleDateLine + '\n\n' + body;
+      return ref ? (bibleWithDate + '\n\n[' + ref + ']') : bibleWithDate;
     }
     if (App.category === 'reflection'){
       var dateLine = '\uD83D\uDCD6 ' + monthDayLabel(App.contentKey) + ' 오늘의 묵상';
